@@ -14,7 +14,9 @@ const (
 	GET
 	SET
 	INCR
+	INCRBY
 	DECR
+	DECRBY
 	EXISTS
 	CONFIG
 )
@@ -26,8 +28,12 @@ func CommandFrom(str string) (Command, error) {
 		return SET, nil
 	case "INCR":
 		return INCR, nil
+	case "INCRBY":
+		return INCRBY, nil
 	case "DECR":
 		return DECR, nil
+	case "DECRBY":
+		return DECRBY, nil
 	case "COMMAND":
 		return COMMAND, nil
 	case "GET":
@@ -47,7 +53,7 @@ func CommandFrom(str string) (Command, error) {
 
 func (comm Command) isMutation() bool {
 	switch comm {
-	case SET, INCR, DECR:
+	case SET, INCR, INCRBY, DECR, DECRBY:
 		return true
 	default:
 		return false
@@ -56,7 +62,7 @@ func (comm Command) isMutation() bool {
 
 func (comm Command) hasIntegerResponse() bool {
 	switch comm {
-	case INCR, DECR, EXISTS:
+	case INCR, INCRBY, DECR, DECRBY, EXISTS:
 		return true
 	default:
 		return false
