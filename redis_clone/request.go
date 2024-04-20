@@ -137,6 +137,8 @@ func HandleRequest(conn net.Conn) {
 					}
 				} else if state.op.Command.hasIntegerResponse() {
 					response = fmt.Sprintf(IntegerFmt, resp)
+				} else if state.op.Command.passThroughResponse() {
+					response = resp
 				} else {
 					response = fmt.Sprintf(BulkStringFmt, len(resp), resp)
 				}

@@ -2,6 +2,7 @@ package redis_clone
 
 import (
 	"errors"
+	"fmt"
 	"github.com/beglaryh/gocommon/collection"
 	"strconv"
 	"sync"
@@ -50,6 +51,12 @@ func handleImmutableOperation(op Operation) (string, error) {
 		} else {
 			return "1", nil
 		}
+	case LRANGE:
+		s1, _ := op.Values.Get(0).Get()
+		s2, _ := op.Values.Get(1).Get()
+		start, _ := strconv.Atoi(s1)
+		end, _ := strconv.Atoi(s2)
+		return handleLRange(op.getKey(), start, end)
 	default:
 		return "PONG", nil // TODO
 	}
@@ -103,4 +110,33 @@ func handlePush(key string, values collection.List[string]) (string, error) {
 	}
 
 	return strconv.Itoa(values.Size()), nil
+}
+
+// TODO for now handling basic range
+func handleLRange(key string, start int, end int) (string, error) {
+	val, ok := data[key]
+	if !ok {
+		return "", errors.New("TODO ERROR")
+	}
+	if val.et != ELIST {
+		return "", errors.New("TODO ERROR")
+	}
+	ll := val.v.(collection.LinkedList[string])
+	arr := ll.ToArray()
+	if end <= len(arr) {
+		end += 1
+	}
+	sub := arr[start:end]
+
+	length := len(sub)
+	format := "*%d\r\n%s"
+
+	arrayStr := ""
+	for _, e := range sub {
+		s := fmt.Sprintf("$%d\r\n%s\r\n", len(e), e)
+		arrayStr += s
+	}
+	response := fmt.Sprintf(format, length, arrayStr)
+	return response, nil
+
 }

@@ -20,6 +20,7 @@ const (
 	DECRBY
 	RPUSH
 	LPUSH
+	LRANGE
 	EXISTS
 	CONFIG
 )
@@ -53,6 +54,8 @@ func CommandFrom(str string) (Command, error) {
 		return RPUSH, nil
 	case "LPUSH":
 		return LPUSH, nil
+	case "LRANGE":
+		return LRANGE, nil
 	default:
 		return Command(0), errors.New("unable to parse Command")
 	}
@@ -76,13 +79,17 @@ func (comm Command) hasIntegerResponse() bool {
 	}
 }
 
+func (comm Command) passThroughResponse() bool {
+	return comm == LRANGE
+}
+
 func (comm Command) hasMultipleKeys() bool {
 	return false
 }
 
 func (comm Command) hasMultipleValues() bool {
 	switch comm {
-	case RPUSH, LPUSH:
+	case RPUSH, LPUSH, LRANGE:
 		return true
 	default:
 		return false
@@ -91,7 +98,7 @@ func (comm Command) hasMultipleValues() bool {
 
 func (comm Command) hasValue() bool {
 	switch comm {
-	case SET, INCRBY, DECRBY, RPUSH, LPUSH, CONFIG:
+	case SET, INCRBY, DECRBY, RPUSH, LPUSH, CONFIG, LRANGE:
 		return true
 	default:
 		return false
