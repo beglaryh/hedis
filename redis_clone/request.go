@@ -21,17 +21,44 @@ const (
 type requestState struct {
 	start         bool
 	totalElements int
+	totalKeys     int
+	totalValues   int
 	elementCount  int
+	op            Operation
 }
 
 func newRequestState() requestState {
-	return requestState{start: true}
+	return requestState{
+		start:     true,
+		totalKeys: 1,
+		op:        newOperation(),
+	}
 }
 
 func (state *requestState) reset() {
 	state.start = true
+	state.totalKeys = 1
 	state.totalElements = 0
 	state.elementCount = 0
+	state.op.Keys.Clear()
+	state.op.Values.Clear()
+	state.op.Command = Command(0)
+}
+
+func (state *requestState) requiresKey() bool {
+	return !state.start && state.totalKeys != state.op.Keys.Size()
+}
+
+func (state *requestState) requiresValues() bool {
+	return !state.start && state.totalValues != state.op.Values.Size()
+}
+
+func (state *requestState) addKey(key string) {
+	_ = state.op.Keys.Add(key)
+}
+
+func (state *requestState) addValue(val string) {
+	_ = state.op.Values.Add(val)
 }
 
 func (state *requestState) incrementCount() {
@@ -39,7 +66,7 @@ func (state *requestState) incrementCount() {
 }
 
 func (state *requestState) readyToBeHandled() bool {
-	return !state.start && state.totalElements == state.elementCount
+	return !state.start && state.totalElements == (state.op.Keys.Size()+state.op.Values.Size()+1)
 }
 
 func HandleRequest(conn net.Conn) {
@@ -48,7 +75,6 @@ func HandleRequest(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	state := newRequestState()
 	var response string
-	var operation Operation
 	for scanner.Scan() {
 		part := scanner.Text()
 		if state.start {
@@ -61,10 +87,10 @@ func HandleRequest(conn net.Conn) {
 				total, _ := strconv.Atoi(part[1:])
 				state.totalElements = total
 			}
-
+			continue
 		} else if part[0] == '$' {
 			continue // TODO
-		} else if state.elementCount == 0 {
+		} else if state.op.Command == Command(0) {
 			comm, err := CommandFrom(part)
 			if err != nil {
 				response = fmt.Sprintf("Err unknown command '%s'", part)
@@ -74,42 +100,48 @@ func HandleRequest(conn net.Conn) {
 				}
 				state.reset()
 			} else {
-				operation.Command = comm
+				state.op.Command = comm
 				state.incrementCount()
+				if comm.hasValue() {
+					if comm.hasMultipleValues() {
+						state.totalValues = state.totalElements - 2
+					} else {
+						state.totalValues = 1
+					}
+				}
 			}
-		} else if state.elementCount == 1 {
-			state.incrementCount()
-			operation.Key = part
-		} else if state.elementCount == 2 {
-			state.incrementCount()
-			operation.Value = part
+		} else if state.requiresKey() {
+			state.addKey(part)
+		} else if state.requiresValues() {
+			state.addValue(part)
 		}
 
 		if state.readyToBeHandled() {
-			state.reset()
-			if operation.Command.isMutation() {
-				resp, err := handleMutableOperation(operation)
+
+			if state.op.Command.isMutation() {
+				resp, err := handleMutableOperation(state.op)
 				if err != nil {
 					response = fmt.Sprintf(ErrorFmt, err.Error())
-				} else if operation.Command.hasIntegerResponse() {
+				} else if state.op.Command.hasIntegerResponse() {
 					response = fmt.Sprintf(IntegerFmt, resp)
 				} else {
 					response = fmt.Sprintf(BulkStringFmt, len(resp), resp)
 				}
 			} else {
-				resp, err := handleImmutableOperation(operation)
+				resp, err := handleImmutableOperation(state.op)
 				if err != nil {
 					if resp != "" {
 						response = fmt.Sprintf(SimpleFmt, resp)
 					} else {
 						response = fmt.Sprintf(ErrorFmt, err.Error())
 					}
-				} else if operation.Command.hasIntegerResponse() {
+				} else if state.op.Command.hasIntegerResponse() {
 					response = fmt.Sprintf(IntegerFmt, resp)
 				} else {
 					response = fmt.Sprintf(BulkStringFmt, len(resp), resp)
 				}
 			}
+			state.reset()
 			_, err := conn.Write([]byte(response))
 			if err != nil {
 				return
