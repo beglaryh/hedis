@@ -14,6 +14,7 @@ const (
 	PING
 	GET
 	SET
+	DEL
 	INCR
 	INCRBY
 	DECR
@@ -36,6 +37,8 @@ func CommandFrom(str string) (Command, error) {
 		return INCRBY, nil
 	case "DECR":
 		return DECR, nil
+	case "DEL":
+		return DEL, nil
 	case "DECRBY":
 		return DECRBY, nil
 	case "COMMAND":
@@ -63,7 +66,7 @@ func CommandFrom(str string) (Command, error) {
 
 func (comm Command) isMutation() bool {
 	switch comm {
-	case SET, INCR, INCRBY, DECR, DECRBY, RPUSH, LPUSH:
+	case SET, INCR, INCRBY, DECR, DECRBY, RPUSH, LPUSH, DEL:
 		return true
 	default:
 		return false
@@ -72,7 +75,7 @@ func (comm Command) isMutation() bool {
 
 func (comm Command) hasIntegerResponse() bool {
 	switch comm {
-	case INCR, INCRBY, DECR, DECRBY, EXISTS, RPUSH, LPUSH:
+	case INCR, INCRBY, DECR, DECRBY, EXISTS, RPUSH, LPUSH, DEL:
 		return true
 	default:
 		return false
@@ -84,7 +87,12 @@ func (comm Command) passThroughResponse() bool {
 }
 
 func (comm Command) hasMultipleKeys() bool {
-	return false
+	switch comm {
+	case DEL:
+		return true
+	default:
+		return false
+	}
 }
 
 func (comm Command) hasMultipleValues() bool {

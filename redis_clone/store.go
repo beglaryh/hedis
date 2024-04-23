@@ -28,9 +28,26 @@ func handleMutableOperation(op Operation) (string, error) {
 		return handleDecrement(op.getKey(), op.getValue())
 	case RPUSH:
 		return handlePush(op.getKey(), op.Values)
+	case DEL:
+		return handleDelete(op.Keys)
 	default:
 		return "", errors.New("invalid mutation command")
 	}
+}
+
+func handleDelete(keys collection.List[string]) (string, error) {
+	deleteFunc := func(key string) int {
+		_, exists := data[key]
+		if !exists {
+			return 0
+		}
+		delete(data, key)
+		return 1
+	}
+	total := collection.Map[string, int](keys.Stream().Slice(), deleteFunc).
+		Reduce(0, func(a, b int) int { return a + b })
+
+	return strconv.Itoa(total), nil
 }
 
 func handleImmutableOperation(op Operation) (string, error) {

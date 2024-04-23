@@ -108,6 +108,8 @@ func HandleRequest(conn net.Conn) {
 					} else {
 						state.totalValues = 1
 					}
+				} else if comm.hasMultipleKeys() {
+					state.totalKeys = state.totalElements - 1
 				}
 			}
 		} else if state.requiresKey() {
