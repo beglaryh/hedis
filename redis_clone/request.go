@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 type Request struct {
@@ -73,6 +74,7 @@ func HandleRequest(conn net.Conn) {
 	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
+	scanner.Split(splitter)
 	state := newRequestState()
 	var response string
 	for scanner.Scan() {
@@ -147,9 +149,24 @@ func HandleRequest(conn net.Conn) {
 			}
 			state.reset()
 			_, err := conn.Write([]byte(response))
+			response = ""
 			if err != nil {
 				return
 			}
 		}
 	}
+}
+
+func splitter(data []byte, end bool) (int, []byte, error) {
+	str := string(data)
+	if end {
+		return len(data), data, nil
+	}
+
+	index := strings.Index(str, "\r\n")
+	if index == -1 {
+		return len(data), data, nil
+	}
+	token := str[0:index]
+	return index + 2, []byte(token), nil
 }

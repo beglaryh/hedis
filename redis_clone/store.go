@@ -15,6 +15,8 @@ func handleMutableOperation(op Operation) (string, error) {
 	lock.Lock()
 	defer lock.Unlock()
 	switch op.Command {
+	case APPEND:
+		return handleAppend(op.getKey(), op.getValue())
 	case SET:
 		data[op.getKey()] = valueElement{v: op.getValue(), et: ESTRING}
 		return "OK", nil
@@ -33,6 +35,25 @@ func handleMutableOperation(op Operation) (string, error) {
 	default:
 		return "", errors.New("invalid mutation command")
 	}
+}
+
+func handleAppend(key, value string) (string, error) {
+	v, exists := data[key]
+	newValue := ""
+	if exists {
+		if v.et != ESTRING {
+			return "", errors.New("invalid operation TODO")
+		}
+		existingValue := v.v.(string)
+		newValue = existingValue + value
+	} else {
+		newValue = value
+	}
+	var v2 valueElement
+	v2.v = newValue
+	v2.et = ESTRING
+	data[key] = v2
+	return strconv.Itoa(len(newValue)), nil
 }
 
 func handleDelete(keys collection.List[string]) (string, error) {
@@ -69,11 +90,13 @@ func handleImmutableOperation(op Operation) (string, error) {
 			return "1", nil
 		}
 	case LRANGE:
-		s1, _ := op.Values.Get(0).Get()
-		s2, _ := op.Values.Get(1).Get()
+		s1, _ := op.Values.Get(0)
+		s2, _ := op.Values.Get(1)
 		start, _ := strconv.Atoi(s1)
 		end, _ := strconv.Atoi(s2)
 		return handleLRange(op.getKey(), start, end)
+	case ECHO:
+		return op.getKey(), nil
 	default:
 		return "PONG", nil // TODO
 	}

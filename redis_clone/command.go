@@ -9,7 +9,8 @@ import (
 type Command int
 
 const (
-	ECHO Command = iota + 1
+	APPEND Command = iota + 1
+	ECHO
 	COMMAND
 	PING
 	GET
@@ -29,6 +30,8 @@ const (
 func CommandFrom(str string) (Command, error) {
 	str = strings.ToUpper(str)
 	switch str {
+	case "APPEND":
+		return APPEND, nil
 	case "SET":
 		return SET, nil
 	case "INCR":
@@ -66,7 +69,7 @@ func CommandFrom(str string) (Command, error) {
 
 func (comm Command) isMutation() bool {
 	switch comm {
-	case SET, INCR, INCRBY, DECR, DECRBY, RPUSH, LPUSH, DEL:
+	case APPEND, SET, INCR, INCRBY, DECR, DECRBY, RPUSH, LPUSH, DEL:
 		return true
 	default:
 		return false
@@ -75,7 +78,7 @@ func (comm Command) isMutation() bool {
 
 func (comm Command) hasIntegerResponse() bool {
 	switch comm {
-	case INCR, INCRBY, DECR, DECRBY, EXISTS, RPUSH, LPUSH, DEL:
+	case APPEND, INCR, INCRBY, DECR, DECRBY, EXISTS, RPUSH, LPUSH, DEL:
 		return true
 	default:
 		return false
@@ -106,7 +109,7 @@ func (comm Command) hasMultipleValues() bool {
 
 func (comm Command) hasValue() bool {
 	switch comm {
-	case SET, INCRBY, DECRBY, RPUSH, LPUSH, CONFIG, LRANGE:
+	case APPEND, SET, INCRBY, DECRBY, RPUSH, LPUSH, CONFIG, LRANGE:
 		return true
 	default:
 		return false
@@ -132,11 +135,11 @@ func newOperation() Operation {
 }
 
 func (op Operation) getKey() string {
-	key, _ := op.Keys.Get(0).Get()
+	key, _ := op.Keys.Get(0)
 	return key
 }
 
 func (op Operation) getValue() string {
-	value, _ := op.Values.Get(0).Get()
+	value, _ := op.Values.Get(0)
 	return value
 }
