@@ -3,9 +3,12 @@ package redis_clone
 import (
 	"errors"
 	"fmt"
-	"github.com/beglaryh/gocommon/collection"
 	"strconv"
 	"sync"
+
+	"github.com/beglaryh/gocommon/collection/list"
+	"github.com/beglaryh/gocommon/collection/list/linkedlist"
+	"github.com/beglaryh/gocommon/collection/stream"
 )
 
 var lock sync.Mutex
@@ -56,7 +59,7 @@ func handleAppend(key, value string) (string, error) {
 	return strconv.Itoa(len(newValue)), nil
 }
 
-func handleDelete(keys collection.List[string]) (string, error) {
+func handleDelete(keys list.List[string]) (string, error) {
 	deleteFunc := func(key string) int {
 		_, exists := data[key]
 		if !exists {
@@ -65,7 +68,8 @@ func handleDelete(keys collection.List[string]) (string, error) {
 		delete(data, key)
 		return 1
 	}
-	total := collection.Map[string, int](keys.Stream().Slice(), deleteFunc).
+
+	total := stream.Map[string, int](keys.Stream().Slice(), deleteFunc).
 		Reduce(0, func(a, b int) int { return a + b })
 
 	return strconv.Itoa(total), nil
@@ -135,15 +139,15 @@ func handleDecrement(key, amount string) (string, error) {
 	return handleIncrement(key, strconv.Itoa(-1*val))
 }
 
-func handlePush(key string, values collection.List[string]) (string, error) {
+func handlePush(key string, values list.List[string]) (string, error) {
 	val, ok := data[key]
 	if !ok {
-		v := collection.NewLinkedList[string]()
+		v := linkedlist.New[string]()
 		values.Stream().ForEach(func(e string) { _ = v.Add(e) })
 		newVal := valueElement{v: v, et: ELIST}
 		data[key] = newVal
 	} else {
-		list := val.v.(collection.LinkedList[string])
+		list := val.v.(linkedlist.LinkedList[string])
 		values.Stream().ForEach(func(e string) { _ = list.Add(e) })
 		newVal := valueElement{v: list, et: ELIST}
 		data[key] = newVal
@@ -161,7 +165,7 @@ func handleLRange(key string, start int, end int) (string, error) {
 	if val.et != ELIST {
 		return "", errors.New("TODO ERROR")
 	}
-	ll := val.v.(collection.LinkedList[string])
+	ll := val.v.(linkedlist.LinkedList[string])
 	arr := ll.ToArray()
 	if end <= len(arr) {
 		end += 1

@@ -2,8 +2,10 @@ package redis_clone
 
 import (
 	"errors"
-	"github.com/beglaryh/gocommon/collection"
 	"strings"
+
+	"github.com/beglaryh/gocommon/collection/list"
+	"github.com/beglaryh/gocommon/collection/list/linkedlist"
 )
 
 type Command int
@@ -118,15 +120,15 @@ func (comm Command) hasValue() bool {
 
 type Operation struct {
 	Command Command
-	Keys    collection.List[string]
-	Values  collection.List[string]
+	Keys    list.List[string]
+	Values  list.List[string]
 }
 
 func newOperation() Operation {
-	keysLL := collection.NewLinkedList[string]()
-	valuesLL := collection.NewLinkedList[string]()
-	keys := (collection.List[string])(&keysLL)
-	values := (collection.List[string])(&valuesLL)
+	keysLL := linkedlist.New[string]()
+	valuesLL := linkedlist.New[string]()
+	keys := (list.List[string])(&keysLL)
+	values := (list.List[string])(&valuesLL)
 	return Operation{
 		Command: Command(0),
 		Keys:    keys,

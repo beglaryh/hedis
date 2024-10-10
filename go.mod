@@ -1,5 +1,5 @@
 module redis-clone
 
-go 1.22
+go 1.23.2
 
-require github.com/beglaryh/gocommon v0.0.3
+require github.com/beglaryh/gocommon v1.0.7
