@@ -95,7 +95,8 @@ func HandleRequest(conn net.Conn) {
 		} else if state.op.Command == Command(0) {
 			comm, err := CommandFrom(part)
 			if err != nil {
-				response = fmt.Sprintf("Err unknown command '%s'", part)
+				message := fmt.Sprintf("Err unknown command '%s'", part)
+				response = fmt.Sprintf(ErrorFmt, message)
 				_, err := conn.Write([]byte(response))
 				if err != nil {
 					return
