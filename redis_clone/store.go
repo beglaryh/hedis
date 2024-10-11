@@ -189,5 +189,4 @@ func handleLRange(key string, start int, end int) (string, error) {
 	}
 	response := fmt.Sprintf(format, length, arrayStr)
 	return response, nil
-
 }
