@@ -21,6 +21,7 @@ func main() {
 			panic(err)
 		}
 		go redis_clone.HandleRequest(conn)
+		go redis_clone.Persist()
 	}
 
 }
