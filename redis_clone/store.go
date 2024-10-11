@@ -167,8 +167,15 @@ func handleLRange(key string, start int, end int) (string, error) {
 	}
 	ll := val.v.(linkedlist.LinkedList[string])
 	arr := ll.ToArray()
-	if end <= len(arr) {
+	fmt.Println(end)
+
+	if end > -1 && end <= len(arr) {
 		end += 1
+	} else if end < 0 {
+		end = len(arr) + end + 1
+		if end > len(arr) {
+			end = end % len(arr)
+		}
 	}
 	sub := arr[start:end]
 
