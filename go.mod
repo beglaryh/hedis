@@ -1,4 +1,4 @@
-module hedis
+module github.com/beglaryh/hedis
 
 go 1.23.2
 
