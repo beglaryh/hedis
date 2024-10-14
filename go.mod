@@ -1,4 +1,4 @@
-module redis-clone
+module hedis
 
 go 1.23.2
 

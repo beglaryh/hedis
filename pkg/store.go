@@ -1,4 +1,4 @@
-package redis_clone
+package hedis
 
 import (
 	"errors"

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	hedis "hedis/pkg"
 	"log"
 	"net"
 	"os"
-	"redis-clone/redis_clone"
 )
 
 func main() {
@@ -24,8 +24,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		go redis_clone.HandleRequest(conn)
-		go redis_clone.Persist()
+		go hedis.HandleRequest(conn)
+		go hedis.Persist()
 	}
 
 }
