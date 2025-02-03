@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -57,8 +56,6 @@ func toOperation(log gocommon.String) domain.Operation {
 	keys := linkedlist.New[string]()
 	values := linkedlist.New[string]()
 
-	fmt.Println(log)
-	fmt.Println(split)
 	kvs := split[1].Split(",")
 	vs := split[2].Split("*,*")
 
