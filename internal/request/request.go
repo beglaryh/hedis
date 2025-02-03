@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	domain "github.com/beglaryh/hedis/internal/common"
+	"github.com/beglaryh/hedis/internal/persistence"
 	"github.com/beglaryh/hedis/internal/store"
 )
 
@@ -135,6 +136,11 @@ func HandleRequest(conn net.Conn) {
 				} else {
 					response = fmt.Sprintf(BulkStringFmt, len(resp), resp)
 				}
+
+				// Log mutable event
+				if err == nil {
+					persistence.Persist(state.op)
+				}
 			} else {
 				resp, err := store.HandleImmutableOperation(state.op)
 				if err != nil {
@@ -162,10 +168,10 @@ func HandleRequest(conn net.Conn) {
 }
 
 func splitter(data []byte, end bool) (int, []byte, error) {
-	str := string(data)
-	if end {
-		return len(data), data, nil
+	if end && len(data) == 0 {
+		return 0, nil, nil
 	}
+	str := string(data)
 
 	index := strings.Index(str, "\r\n")
 	if index == -1 {

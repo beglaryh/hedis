@@ -8,12 +8,14 @@ import (
 
 	"github.com/beglaryh/gocommon/collection/list"
 	"github.com/beglaryh/gocommon/collection/list/linkedlist"
-	"github.com/beglaryh/gocommon/collection/stream"
+	"github.com/beglaryh/gocommon/stream"
 	domain "github.com/beglaryh/hedis/internal/common"
 )
 
-var lock sync.Mutex
-var data = map[string]valueElement{}
+var (
+	lock sync.Mutex
+	data = map[string]valueElement{}
+)
 
 func GetData() *map[string]valueElement {
 	return &data

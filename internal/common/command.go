@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/beglaryh/gocommon/collection/list"
@@ -144,4 +145,22 @@ func (op Operation) GetKey() string {
 func (op Operation) GetValue() string {
 	value, _ := op.Values.Get(0)
 	return value
+}
+
+func (op Operation) ToLog() string {
+	keys := ""
+	for i, e := range op.Keys.Iter {
+		keys += e
+		if i != op.Keys.Size()-1 {
+			keys += ","
+		}
+	}
+	values := ""
+	for i, e := range op.Values.Iter {
+		values += e
+		if i != op.Values.Size()-1 {
+			values += "*,*"
+		}
+	}
+	return strconv.Itoa(int(op.Command)) + "*#*" + keys + "*#*" + values
 }
